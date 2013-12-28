@@ -1,0 +1,428 @@
+<html>
+
+    <head>
+
+      <title>Facebook Application</title>
+
+ <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.js"></script> 
+
+	  <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+
+    </head>
+
+    <body>
+
+	  <div id="fb-root"></div>      
+      <div id="mydiv"></div>
+	  
+ <script src="http://connect.facebook.net/en_US/all.js"></script>
+
+      
+
+<script type="text/javascript">
+
+       FB.init({ 
+
+	appId:'215296728529734', 
+
+	cookie:true, 
+
+	status:true, 
+
+	xfbml:true,
+
+        oauth:true
+
+}); 
+
+
+function showAccountInfo() {
+
+  FB.api(
+
+    {
+
+      method: 'fql.query',
+
+      query: 'SELECT name, pic_square FROM user WHERE uid='+FB.getUserID()
+
+    },
+
+    function(response) {
+
+      document.getElementById('mydiv').innerHTML = (
+
+        '<img src="' + response[0].pic_square + '"> ' +
+
+        response[0].name +
+
+        ' <img onclick="FB.logout()" style="cursor: pointer;"' +
+
+            'src="https://s-static.ak.fbcdn.net/rsrc.php/z2Y31/hash/cxrz4k7j.gif">' +
+
+		' <br /><br /> <a href="#" onClick=postToWall()>Post to wall</a>' +
+
+' <br /><br /> <a href="#" onClick=getAlbumPhotos()>Albums</a>'+
+
+' <br /><br /><a href="#" onClick=showFriendList()>Show friends</a>' +
+
+'<br /><br /><a href="#" onClick=fqlQuery()>FQL Query</a>'+
+
+'<br /><br /><a href="#" onClick=getStatus()>FQL Query Status</a>'+
+
+' <br /><br /> <a href="#" onClick=getGender()> Gender Ratio</a>'+'<br /><br />'
+
+      );
+
+    }
+
+  );
+
+}
+
+
+function postToWall() {
+
+	FB.ui(
+
+	  {
+
+		method: 'feed',
+
+		attachment: {
+
+		  name: 'DEMO',
+
+		  caption: 'Facebook Application',
+
+		  description: (
+
+			'Demonstration of JavaScript SDK, it is easy to do!'
+
+		  ),
+
+		  href: 'http://homepage.usask.ca/~ksr494/'
+
+		},
+
+		action_links: [
+
+		  { text: 'DEMO', href: 'http://homepage.usask.ca/~ksr494/' }
+
+		]
+
+	  },
+
+	  function(response) {
+
+		if (response && response.post_id) {
+
+		  alert('Post was published.');
+
+		} else {
+
+		  alert('Post was not published.');
+
+		}
+
+	  }
+
+	);
+
+}
+
+
+//Display friend list
+
+function showFriendList(){
+
+				
+ FB.api('/me/friends?fields=name,picture', function(response) {		
+
+     for (var i=0, l=response.data.length; i<l; i++)
+
+     {	
+
+document.getElementById('friends').innerHTML =  document.getElementById('friends').innerHTML + ' <img src="' + response.data[i].picture +'" align="middle"/>'+response.data[i].name+'<br />'+'<br />';	
+
+				 } 
+
+			  });
+}
+
+
+//Friends Gender
+function showFriendGender(){
+
+        FB.api('/me/friends?fields=name', function(response) {
+
+          for (var i=0, l=14; i<l; i++){
+
+           var query = FB.Data.query('name', response.id);
+
+            query.wait(function(response) {
+        document.getElementById('friends').innerHTML =
+
+              'You are a :' + response.data[i].name+ "<br />";
+
+                     });
+					 
+	           }//for
+
+                });
+}//fql query
+
+
+
+
+function showLogin() {
+
+    //FB.login();
+
+FB.login(function(response) {
+
+   if (response.authResponse) {
+
+     console.log('Welcome!  Fetching your information.... ');
+
+     FB.api('/me', function(response) {
+
+       console.log('Good to see you, ' + response.name + '.');
+
+       //FB.logout(function(response) {
+
+       //  console.log('Logged out.');
+
+       //});
+
+     });
+
+   } else {
+
+     console.log('User cancelled login or did not fully authorize.');
+
+   }
+
+ }, {scope: 'email,user_birthday,status_update,user_status,publish_stream'});
+
+}
+
+
+
+function showLoginButton() {
+
+  document.getElementById('mydiv').innerHTML = (
+
+    '<img onclick="showLogin()" style="cursor: pointer;"' +
+
+         'src="https://s-static.ak.fbcdn.net/rsrc.php/zB6N8/hash/4li2k73z.gif">'
+
+  );
+
+}
+
+
+
+function ShowMyName() {
+
+FB.api('/me', function(response) {
+
+ alert(response.name);
+
+});
+
+}
+
+
+
+function onStatus(response) {
+
+  if (response.status === 'connected') {
+
+    //alert("hello");
+
+    showAccountInfo();
+
+  } else {
+
+    showLoginButton();
+
+  }
+
+}
+
+FB.getLoginStatus(function(response) {
+
+  onStatus(response); 
+
+  FB.Event.subscribe('auth.statusChange', onStatus); 
+
+});
+
+
+
+
+//FQL Query
+ function fqlQuery(){
+
+                FB.api('/me', function(response) {
+
+                     var query = FB.Data.query('select first_name	, last_name,sex,email, pic_square from user where uid={0}', response.id);
+
+            query.wait(function(rows) {
+        document.getElementById('name').innerHTML =
+
+                          '<img src="' + rows[0].pic_square + '" alt="" />' + "<br />" + 'Your first name : ' + rows[0].first_name +  "<br />" + 'Your last name :'  + rows[0].last_name+  "<br />" +'You are a :' + rows[0].sex+ "<br />"+'Your Email : '+rows[0].email+ "<br />";
+
+
+document.getElementById('uid').innerHTML =
+
+     'Your user id: ' + rows[0].uid + "<br />";
+
+                     });
+
+                });
+}//fql query
+
+
+function getStatus(){
+                
+                FB.api('/me', function(response) {
+                     var query = FB.Data.query('SELECT  message FROM status WHERE uid=me()');
+
+                    query.wait(function(rows) {
+                        document.getElementById('getstatus').innerHTML =' Last Status: ' + rows[0].message  + "<br />";
+                     });
+              });
+            }
+
+
+//Publish Stream
+function streamPublish(name, description, hrefTitle, hrefLink, userPrompt){
+                FB.ui(
+                {
+                    method: 'stream.publish',
+                    message: '',
+                    attachment: {
+                        name: name,
+                        caption: '',
+                        description: (description),
+                       // href: hrefLink
+                    },
+                    action_links: [
+                        { text: hrefTitle, href: hrefLink }
+                    ],
+                    user_prompt_message: userPrompt
+                },
+                function(response) {
+ 
+                });
+ 
+            }
+            function showStream(){
+                FB.api('/me', function(response) {
+                    //console.log(response.id);
+                    streamPublish(response.name, 'Share the stream');
+                });
+            }
+ 
+            function share(){
+                var share = {
+                    method: 'stream.share',
+                    u: 'http://homepage.usask.ca/~ksr494/'
+                };
+ 
+                FB.ui(share, function(response) { console.log(response); });
+}
+//end_publish_stream
+
+
+//album
+
+function getAlbumPhotos(){
+            FB.api('/me/albums',  function(resp) {
+                //Log.info('Albums', resp);
+                var ul = document.getElementById('albums');
+                for (var i=0, l=resp.data.length; i<l; i++){
+                    var
+                        album = resp.data[i],
+                        li = document.createElement('li'),
+                        a = document.createElement('a');
+                    a.innerHTML = album.name;
+                    a.href = album.link;
+                    li.appendChild(a);
+                    ul.appendChild(li);
+                }
+            });
+        };//album
+
+
+//Set Status
+
+google.load('visualization', '1.0', {'packages':['corechart']});
+
+function getGender(){
+FB.api(  
+    {  
+        method: 'fql.query',  
+        query: 'SELECT sex FROM user WHERE uid IN (SELECT uid1 FROM friend WHERE uid2 = me())'  
+    },  
+    function(response) {  
+        var malecount=0;  
+        var femalecount=0;  
+        $.each(response,function(key,value){  
+            if(value.sex=="male")  
+                malecount++;  
+            if(value.sex=="female")  
+                femalecount++;  
+        });  
+        google.setOnLoadCallback(drawPieChart(malecount,femalecount));  
+    }  
+    );  
+}//getGender
+
+function drawPieChart(malecount,femalecount) {
+
+    // Create the data table.
+    var data = new google.visualization.DataTable();
+    data.addColumn('string', 'Gender');
+    data.addColumn('number', 'Count');
+    data.addRows([
+        ['Male', malecount],
+        ['Female', femalecount]
+        ]);
+
+    // Set chart options
+    var options = {
+        'title':'Facebook Friends Gender Ratio',
+        'width':600,
+        'height':400,
+        'is3D':true,
+        'legend':'center',
+        'backgroundColor':'#F5F5F5'
+    };
+
+    // Instantiate and draw our chart, passing in some options.
+    var chart = new google.visualization.PieChart(document.getElementById('chart_div'));
+    chart.draw(data, options);
+}//drawPieChart
+
+
+</script>
+
+
+<div id="friends"></div> 
+<div id ="name"></div>
+<div id="uid"></div>
+<div id="publish"></div>
+<ul id="albums"></ul>
+<div id="getstatus"></div>
+
+<fb:comments xid="744382852" width="425"></fb:comments>
+<div id="chart_div" style="width: 600px; height: 400px; margin: auto; border: 1px dotted #999999;"></div>
+
+<p><fb:login-button autologoutlink="true" perms="email,user_birthday,status_update,user_status,publish_stream"></fb:login-button></p>
+	  
+
+</body>
+</html>
